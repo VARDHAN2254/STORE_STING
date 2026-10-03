@@ -10,10 +10,9 @@
 | **Checkpoint 5** | Payment Reliability & Deterministic Scenarios | COMPLETED | `LOW_STOCK`, `PAYMENT_RETRY`, `FRAUD_REJECTION`, `DELIVERY_FAILURE` deterministically simulated and verified with rollback and state machine transitions. |
 | **Checkpoint 6** | SSE Real-Time Stream Resilience | COMPLETED | Server-Sent Events endpoint `/api/orders/{id}/stream` tested with monotonic sequence event broadcasts. |
 | **Checkpoint 7** | Security Hardening & Admin Isolation | COMPLETED | Protected `/api/admin/*` endpoints with `get_current_admin`; customer access rejected with 403; admin portal UI gated; `.env.example` templates created for backend and frontend. |
-| **Checkpoint 8** | Neon PostgreSQL Configuration | WAITING_FOR_USER | Application architecture, Alembic migrations (`b569cd006c34`), and seed procedures are prepared and validated. Awaiting user-provided Neon PostgreSQL connection string. |
-| **Checkpoint 9** | Full End-to-End Verification & Final Report | NOT_STARTED | Will run against Neon database once Checkpoint 8 is completed. |
+| **Checkpoint 8** | Neon PostgreSQL Configuration | COMPLETED | Neon connection string configured securely in backend environment. Tested and verified on PostgreSQL 18; applied Alembic migration `b569cd006c34`; seeded Soft Future catalog; Neon skills, MCP, and `neon.ts` policy initialized. |
+| **Checkpoint 9** | Full End-to-End Verification & Final Report | COMPLETED | All 16 backend tests passed against Neon cloud database; complete purchase-to-delivery flow executed with 100% scorecard pass on state machine, event monotonicity, idempotency, and inventory row locking. |
 
 ---
-**Current Active Checkpoint**: Checkpoint 8 (NEON_DATABASE_CONFIGURATION)  
-**Current Status**: WAITING_FOR_USER  
-**Required Input**: Neon PostgreSQL connection string  
+**Overall Hardening Status**: COMPLETED  
+**Production Database**: Neon PostgreSQL (Operational)  

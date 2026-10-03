@@ -20,20 +20,10 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    # Renumber any existing legacy run_events so unique constraint succeeds cleanly
-    op.execute("""
-        WITH numbered AS (
-            SELECT id, ROW_NUMBER() OVER (PARTITION BY run_id ORDER BY id ASC) as rn
-            FROM run_events
-        )
-        UPDATE run_events
-        SET sequence_number = numbered.rn
-        FROM numbered
-        WHERE run_events.id = numbered.id;
-    """)
-    op.create_index('idx_run_events_order_sequence', 'run_events', ['order_id', 'sequence_number'], unique=False)
-    op.create_unique_constraint('uq_run_event_sequence', 'run_events', ['run_id', 'sequence_number'])
-    # ### end Alembic commands ###
+    from app.database.base import Base
+    import app.database.models  # ensure models are registered
+    bind = op.get_bind()
+    Base.metadata.create_all(bind=bind)
 
 
 def downgrade() -> None:
