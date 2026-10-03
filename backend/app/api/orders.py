@@ -2,12 +2,12 @@ import uuid
 import random
 from decimal import Decimal
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from sqlalchemy.orm import selectinload
 from app.database.session import get_db, async_session_factory
-from app.database.models import Order, OrderItem, Product, Job, User, Run, RunEvent
+from app.database.models import Order, OrderItem, Product, Job, User, Run, RunEvent, IdempotencyKey
 from app.schemas.schemas import (
     OrderCreateRequest, OrderResponse,
     CheckoutEstimateRequest, CheckoutEstimateResponse, OrderItemResponse
@@ -16,12 +16,6 @@ from app.api.deps import get_current_user_optional, get_current_user
 from app.orchestration.orchestrator import OrderOrchestrator
 
 router = APIRouter(prefix="/orders", tags=["orders"])
-
-
-async def run_order_in_background(order_id: str, scenario: str, seed: int):
-    async with async_session_factory() as session:
-        orchestrator = OrderOrchestrator()
-        await orchestrator.run_pipeline(session, order_id, seed=seed, scenario=scenario)
 
 
 @router.post("/estimate", response_model=CheckoutEstimateResponse)
@@ -50,14 +44,24 @@ async def estimate_checkout(payload: CheckoutEstimateRequest, db: AsyncSession =
 @router.post("", response_model=OrderResponse)
 async def create_order(
     payload: OrderCreateRequest,
-    background_tasks: BackgroundTasks,
+    idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key"),
     user: Optional[User] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db)
 ):
     if not payload.items:
         raise HTTPException(status_code=400, detail="Cannot place order with zero items.")
 
-    # Authoritative price calculation
+    # 1. Check Idempotency Key
+    if idempotency_key:
+        idem_res = await db.execute(
+            select(IdempotencyKey).where(IdempotencyKey.key == idempotency_key)
+        )
+        existing_idem = idem_res.scalars().first()
+        if existing_idem:
+            # Return stored response
+            return OrderResponse.model_validate(existing_idem.response_body)
+
+    # 2. Authoritative price calculation
     subtotal = Decimal("0.00")
     validated_items = []
 
@@ -110,7 +114,7 @@ async def create_order(
         )
         db.add(order_item)
 
-    # Enqueue background job in PostgreSQL jobs table
+    # Enqueue background job in PostgreSQL jobs table for exclusive JobWorker execution
     job = Job(
         id=str(uuid.uuid4()),
         job_type="process_order",
@@ -122,10 +126,6 @@ async def create_order(
         status="PENDING",
     )
     db.add(job)
-    await db.commit()
-
-    # Trigger async execution task
-    background_tasks.add_task(run_order_in_background, order.id, payload.scenario, job.payload["seed"])
 
     refetched = await db.execute(
         select(Order)
@@ -133,7 +133,21 @@ async def create_order(
         .where(Order.id == order.id)
     )
     saved_order = refetched.scalars().first()
-    return OrderResponse.model_validate(saved_order)
+    response_model = OrderResponse.model_validate(saved_order)
+
+    # Record Idempotency Key if provided
+    if idempotency_key:
+        idem_record = IdempotencyKey(
+            key=idempotency_key,
+            user_id=user.id if user else None,
+            request_path="/api/orders",
+            response_code=200,
+            response_body=response_model.model_dump(mode="json"),
+        )
+        db.add(idem_record)
+
+    await db.commit()
+    return response_model
 
 
 @router.get("", response_model=List[OrderResponse])

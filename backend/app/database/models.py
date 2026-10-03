@@ -13,6 +13,7 @@ from sqlalchemy import (
     Index,
     JSON,
     CheckConstraint,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database.base import Base, TimestampMixin
@@ -320,10 +321,16 @@ class RunEvent(Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     run_id: Mapped[str] = mapped_column(String(36), ForeignKey("runs.id", ondelete="CASCADE"), index=True, nullable=False)
+    sequence_number: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     order_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
     agent: Mapped[str] = mapped_column(String(50), nullable=False)  # OrderAgent, InventoryAgent, PaymentAgent, FulfillmentAgent, DeliveryAgent, System
     state: Mapped[str] = mapped_column(String(50), nullable=False)
     payload: Mapped[Dict[str, Any]] = mapped_column(JSON, default=dict)
+
+    __table_args__ = (
+        UniqueConstraint("run_id", "sequence_number", name="uq_run_event_sequence"),
+        Index("idx_run_events_order_sequence", "order_id", "sequence_number"),
+    )
 
     run: Mapped["Run"] = relationship("Run", back_populates="events")
 
@@ -354,3 +361,15 @@ class RecommendationEvent(Base, TimestampMixin):
     product_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
     event_type: Mapped[str] = mapped_column(String(50), nullable=False)  # view, cart_add, wishlist_add, purchase, compare
     metadata_info: Mapped[Dict[str, Any]] = mapped_column(JSON, default=dict)
+
+
+class IdempotencyKey(Base, TimestampMixin):
+    __tablename__ = "idempotency_keys"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    key: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    user_id: Mapped[Optional[str]] = mapped_column(String(36), index=True, nullable=True)
+    request_path: Mapped[str] = mapped_column(String(255), nullable=False)
+    response_code: Mapped[int] = mapped_column(Integer, nullable=False)
+    response_body: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False)
+

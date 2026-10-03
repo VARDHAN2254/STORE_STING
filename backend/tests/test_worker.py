@@ -47,10 +47,10 @@ async def test_job_worker_execution(client, db_session):
     )
     db_session.add(order_item)
 
-    # Insert a pending job
+    # Insert a pending test job
     job = Job(
         id=str(uuid.uuid4()),
-        job_type="process_order",
+        job_type="test_process_order",
         payload={"order_id": order_id, "scenario": "SUCCESS", "seed": 42},
         status="PENDING",
     )
@@ -59,7 +59,7 @@ async def test_job_worker_execution(client, db_session):
 
     # Instantiate worker and claim job
     worker = JobWorker(worker_id="test-worker-1")
-    claimed_job = await worker.claim_next_job()
+    claimed_job = await worker.claim_next_job(job_type="test_process_order")
     assert claimed_job is not None
     assert claimed_job.id == job.id
     assert claimed_job.status == "PROCESSING"

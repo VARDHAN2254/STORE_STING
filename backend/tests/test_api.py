@@ -132,7 +132,16 @@ async def test_order_creation_and_orchestration(client):
 
 @pytest.mark.asyncio
 async def test_admin_metrics(client):
-    res = await client.get("/api/admin/metrics")
+    from app.core.security import create_access_token
+    from app.database.session import async_session_factory
+    from app.database.models import User
+    from sqlalchemy import select
+
+    async with async_session_factory() as session:
+        admin = (await session.execute(select(User).where(User.role == "admin"))).scalars().first()
+        token = create_access_token(subject=admin.id)
+
+    res = await client.get("/api/admin/metrics", headers={"Authorization": f"Bearer {token}"})
     assert res.status_code == 200
     metrics = res.json()
     assert metrics["total_orders"] >= 1

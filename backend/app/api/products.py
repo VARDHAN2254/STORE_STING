@@ -3,7 +3,7 @@ from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc, asc
+from sqlalchemy import select, desc, asc, cast, String
 from sqlalchemy.orm import selectinload
 from app.database.session import get_db
 from app.database.models import Product, Category, ProductImage
@@ -43,8 +43,7 @@ async def list_products(
         query = query.where(Product.discounted_price <= max_price)
 
     if goal:
-        # PostgreSQL JSON contains check
-        query = query.where(Product.goal_tags.contains([goal]))
+        query = query.where(cast(Product.goal_tags, String).ilike(f"%{goal}%"))
 
     if sort_by == "price_asc":
         query = query.order_by(asc(Product.discounted_price))

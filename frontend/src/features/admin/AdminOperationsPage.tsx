@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
   Activity, ShieldAlert, Cpu, Database, Play, CheckCircle2,
-  AlertTriangle, RefreshCw, Layers, ArrowRight
+  AlertTriangle, RefreshCw, Layers, ArrowRight, Lock
 } from 'lucide-react';
 import { api } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 const SCENARIOS = [
   { id: 'SUCCESS', label: 'SUCCESS (Happy Path)', desc: 'Clean run from inventory to drone delivery' },
@@ -16,6 +17,7 @@ const SCENARIOS = [
 ];
 
 export const AdminOperationsPage: React.FC = () => {
+  const { user, setIsAuthModalOpen } = useAuth();
   const [metrics, setMetrics] = useState<any>(null);
   const [recentRuns, setRecentRuns] = useState<any[]>([]);
   const [selectedRunEvents, setSelectedRunEvents] = useState<any[]>([]);
@@ -30,6 +32,10 @@ export const AdminOperationsPage: React.FC = () => {
   const [simulationResult, setSimulationResult] = useState<any>(null);
 
   const fetchOpsData = async () => {
+    if (!user || user.role !== 'admin') {
+      setIsLoading(false);
+      return;
+    }
     try {
       setIsLoading(true);
       const data = await api.getAdminMetrics();
@@ -49,16 +55,13 @@ export const AdminOperationsPage: React.FC = () => {
     fetchOpsData();
     const interval = setInterval(fetchOpsData, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
 
   const handleViewRun = async (runId: string) => {
     setActiveRunId(runId);
     try {
-      const res = await fetch(`/api/admin/runs/${runId}/events`);
-      if (res.ok) {
-        const events = await res.json();
-        setSelectedRunEvents(events);
-      }
+      const events = await api.getRunEvents(runId);
+      setSelectedRunEvents(events);
     } catch (err) {
       console.error(err);
     }
@@ -81,6 +84,30 @@ export const AdminOperationsPage: React.FC = () => {
       setIsSimulating(false);
     }
   };
+
+  if (!user || user.role !== 'admin') {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-20 text-center space-y-6">
+        <div className="w-16 h-16 rounded-2xl bg-coral/20 text-coral flex items-center justify-center mx-auto">
+          <Lock className="w-8 h-8" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="font-display font-black text-2xl text-ink">Admin Operations Portal Restricted</h2>
+          <p className="text-sm text-ink-muted">
+            The multi-agent orchestration console, PostgreSQL job monitoring, and simulation testbed require administrative privileges.
+          </p>
+        </div>
+        <div className="pt-2">
+          <button
+            onClick={() => setIsAuthModalOpen(true)}
+            className="px-6 py-2.5 rounded-xl bg-ink text-white font-bold text-xs uppercase tracking-wider hover:bg-ink-light transition-colors shadow-soft-sm"
+          >
+            Sign In with Operations Account
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">

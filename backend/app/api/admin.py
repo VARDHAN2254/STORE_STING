@@ -1,25 +1,21 @@
 from typing import List, Dict, Any
 from decimal import Decimal
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc
 from sqlalchemy.orm import selectinload
-from app.database.session import get_db, async_session_factory
-from app.database.models import Order, OrderItem, Run, RunEvent, Job, Inventory, Product
-from app.schemas.schemas import OrderResponse
-from app.orchestration.orchestrator import OrderOrchestrator
+from app.database.session import get_db
+from app.database.models import Order, OrderItem, Run, RunEvent, Job, Inventory, Product, User
+from app.api.deps import get_current_admin
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
-async def run_scenario_task(order_id: str, scenario: str, seed: int):
-    async with async_session_factory() as session:
-        orchestrator = OrderOrchestrator()
-        await orchestrator.run_pipeline(session, order_id, seed=seed, scenario=scenario)
-
-
 @router.get("/metrics")
-async def get_operations_metrics(db: AsyncSession = Depends(get_db)):
+async def get_operations_metrics(
+    admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
     total_orders = await db.scalar(select(func.count(Order.id))) or 0
     total_revenue = await db.scalar(select(func.sum(Order.total))) or Decimal("0.00")
     pending_jobs = await db.scalar(select(func.count(Job.id)).where(Job.status == "PENDING")) or 0
@@ -74,16 +70,21 @@ async def get_operations_metrics(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/runs/{run_id}/events")
-async def get_run_events(run_id: str, db: AsyncSession = Depends(get_db)):
+async def get_run_events(
+    run_id: str,
+    admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
     result = await db.execute(
         select(RunEvent)
         .where(RunEvent.run_id == run_id)
-        .order_by(RunEvent.id.asc())
+        .order_by(RunEvent.sequence_number.asc(), RunEvent.id.asc())
     )
     events = result.scalars().all()
     return [
         {
             "id": ev.id,
+            "sequence_number": ev.sequence_number,
             "agent": ev.agent,
             "state": ev.state,
             "payload": ev.payload,
@@ -98,7 +99,7 @@ async def trigger_simulation_scenario(
     order_id: str,
     scenario: str,
     seed: int = 42,
-    background_tasks: BackgroundTasks = BackgroundTasks(),
+    admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db)
 ):
     valid_scenarios = [
@@ -117,11 +118,25 @@ async def trigger_simulation_scenario(
         raise HTTPException(status_code=404, detail="Order not found.")
 
     order.scenario = scenario
+    
+    # Enqueue deterministic scenario job into PostgreSQL jobs table
+    import uuid
+    job = Job(
+        id=str(uuid.uuid4()),
+        job_type="process_order",
+        payload={
+            "order_id": order.id,
+            "scenario": scenario,
+            "seed": seed,
+        },
+        status="PENDING",
+    )
+    db.add(job)
     await db.commit()
 
-    background_tasks.add_task(run_scenario_task, order.id, scenario, seed)
     return {
-        "status": "SIMULATION_TRIGGERED",
+        "status": "SIMULATION_ENQUEUED",
+        "job_id": job.id,
         "order_id": order.id,
         "order_number": order.order_number,
         "scenario": scenario,

@@ -261,6 +261,14 @@ export const api = {
     return res.json();
   },
 
+  async getRunEvents(runId: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/admin/runs/${runId}/events`, {
+      headers: getAuthHeader(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch run events');
+    return res.json();
+  },
+
   async triggerSimulation(orderId: string, scenario: string, seed = 42): Promise<any> {
     const res = await fetch(`${API_BASE}/admin/simulate?order_id=${orderId}&scenario=${scenario}&seed=${seed}`, {
       method: 'POST',

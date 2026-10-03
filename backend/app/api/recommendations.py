@@ -1,7 +1,7 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, cast, String
 from sqlalchemy.orm import selectinload
 from app.database.session import get_db
 from app.database.models import Product, User, Order, OrderItem
@@ -13,12 +13,11 @@ router = APIRouter(prefix="/recommendations", tags=["recommendations"])
 
 @router.get("/goals/{goal_name}", response_model=List[ProductResponse])
 async def get_goal_collection(goal_name: str, db: AsyncSession = Depends(get_db)):
-    # e.g. students, creators, gamers, workspace, travel
     clean_goal = goal_name.lower().replace("-", "")
     query = (
         select(Product)
         .options(selectinload(Product.images))
-        .where(Product.goal_tags.contains([clean_goal]))
+        .where(cast(Product.goal_tags, String).ilike(f"%{clean_goal}%"))
         .limit(10)
     )
     result = await db.execute(query)

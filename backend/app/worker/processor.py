@@ -17,16 +17,13 @@ class JobWorker:
         self.orchestrator = OrderOrchestrator()
         self.is_running = True
 
-    async def claim_next_job(self) -> Job | None:
+    async def claim_next_job(self, job_type: str | None = None) -> Job | None:
         async with async_session_factory() as session:
             # PostgreSQL FOR UPDATE SKIP LOCKED
-            stmt = (
-                select(Job)
-                .where(Job.status == "PENDING")
-                .order_by(Job.created_at.asc())
-                .limit(1)
-                .with_for_update(skip_locked=True)
-            )
+            stmt = select(Job).where(Job.status == "PENDING")
+            if job_type:
+                stmt = stmt.where(Job.job_type == job_type)
+            stmt = stmt.order_by(Job.created_at.asc()).limit(1).with_for_update(skip_locked=True)
             result = await session.execute(stmt)
             job = result.scalars().first()
 
@@ -43,7 +40,7 @@ class JobWorker:
         logger.info("Processing job", job_id=job.id, job_type=job.job_type)
         async with async_session_factory() as session:
             try:
-                if job.job_type == "process_order":
+                if job.job_type in {"process_order", "test_process_order"}:
                     order_id = job.payload.get("order_id")
                     scenario = job.payload.get("scenario", "SUCCESS")
                     seed = job.payload.get("seed", 42)
@@ -93,7 +90,7 @@ class JobWorker:
         logger.info("Starting STORE STING PostgreSQL Commerce Worker", worker_id=self.worker_id)
         while self.is_running:
             try:
-                job = await self.claim_next_job()
+                job = await self.claim_next_job(job_type="process_order")
                 if job:
                     await self.process_job(job)
                 else:
