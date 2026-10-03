@@ -7,7 +7,7 @@
 *A next-generation, human-centric e-commerce platform set in the year 2050.*  
 *Powered by an autonomous multi-agent commerce engine, light Soft Future design, and Neon Serverless PostgreSQL.*
 
-[![CI Pipeline](https://github.com/OWNER/STORE_STING/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/STORE_STING/actions/workflows/ci.yml)
+[![CI Pipeline](https://github.com/VARDHAN2254/STORE_STING/actions/workflows/ci.yml/badge.svg)](https://github.com/VARDHAN2254/STORE_STING/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.13+](https://img.shields.io/badge/Python-3.13+-3776AB.svg?logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
@@ -111,7 +111,7 @@ flowchart TD
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/OWNER/STORE_STING.git
+git clone https://github.com/VARDHAN2254/STORE_STING.git
 cd STORE_STING
 ```
 
