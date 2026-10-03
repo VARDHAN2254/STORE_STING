@@ -358,11 +358,6 @@ PRODUCTS_DATA = [
 async def seed_database():
     print("Connecting to PostgreSQL and creating schema...")
     async with engine.begin() as conn:
-        from sqlalchemy import text
-        try:
-            await conn.execute(text("ALTER TABLE run_events ADD COLUMN IF NOT EXISTS sequence_number INTEGER NOT NULL DEFAULT 1;"))
-        except Exception:
-            pass
         await conn.run_sync(Base.metadata.create_all)
     print("Schema initialized successfully.")
 
