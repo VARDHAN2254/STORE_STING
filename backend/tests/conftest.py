@@ -7,7 +7,6 @@ os.environ["TESTING"] = "1"
 # Add backend directory to sys.path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from app.main import app

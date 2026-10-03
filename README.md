@@ -1,88 +1,290 @@
 # STORE STING
 
-> **Shopping, reimagined.**
+<div align="center">
 
-STORE STING is a next-generation consumer e-commerce platform set in the year 2050. Featuring the **Soft Future** design system—a light, calm, ultra-refined aesthetic—STORE STING marries invisible multi-agent commerce automation underneath with a fast, human-centric shopping experience on top.
+**Shopping, reimagined.**
 
----
+*A next-generation, human-centric e-commerce platform set in the year 2050.*  
+*Powered by an autonomous multi-agent commerce engine, light Soft Future design, and Neon Serverless PostgreSQL.*
 
-## 🌟 Key Highlights
+[![CI Pipeline](https://github.com/OWNER/STORE_STING/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/STORE_STING/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.13+](https://img.shields.io/badge/Python-3.13+-3776AB.svg?logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.111+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![React 18](https://img.shields.io/badge/React-18.3+-61DAFB.svg?logo=react&logoColor=black)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5+-3178C6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Neon Postgres](https://img.shields.io/badge/Database-Neon_Postgres-00E599.svg?logo=postgresql&logoColor=white)](https://neon.tech)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4+-38B2AC.svg?logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
 
-- **Soft Future Light Design System**: Warm Ivory, Pure White, Soft Mist, Mint Aqua, and Deep Ink typography. Zero dark/cyberpunk clutter.
-- **Natural Language Shopping**: Intent-aware search interpreting budget, use-cases, and priority attributes with clear, explainable match badges.
-- **Goal-Based Collections**: Curated setups ("For Students", "For Creators", "For Gamers", "For Your Workspace", "Travel Essentials").
-- **Intelligent Comparison Matrix**: Side-by-side spec, performance, battery, and pricing analysis with factual highlights.
-- **Multi-Agent Commerce Engine**: 
-  - `OrderAgent`: Authoritative calculation and validation.
-  - `InventoryAgent`: Real-time warehouse confidence and row-locked reservations.
-  - `PaymentAgent`: Adaptive retry and fraud risk scoring.
-  - `FulfillmentAgent`: Automated warehouse packaging and manifest generation.
-  - `DeliveryAgent`: Dynamic SLA estimation and carrier dispatch.
-- **Live Real-Time Telemetry**: Real-time Server-Sent Events (SSE) for transparent, zero-polling order tracking.
-- **PostgreSQL Concurrency Worker**: Asynchronous queue processor leveraging `FOR UPDATE SKIP LOCKED` without external brokers (Redis/Celery/Docker).
-- **Financial Rigor**: 100% PostgreSQL `NUMERIC` and Python `Decimal` representation.
+</div>
 
 ---
 
-## 🚀 Quick Start (Native Runtimes, Absolutely No Docker)
+## 📖 Overview
 
-### 1. Prerequisites
-- **Node.js**: v18+ (tested on v24)
-- **Python**: 3.13+
-- **PostgreSQL**: 16+ (local or managed like Neon)
+**STORE STING** reimagines online shopping as it should be in **2050**: calm, transparent, and effortlessly intelligent. Rejecting dark, chaotic cyberpunk tropes, STORE STING is built around the **Soft Future** design system—a light, warm, and tactile visual language that puts people first.
+
+Underneath the serene interface runs a high-integrity, asynchronous **Multi-Agent Commerce Engine**. As soon as an order is placed, autonomous agents coordinate inventory allocation, risk evaluation, simulated payment clearance, automated fulfillment, and SLA-aware delivery dispatch—streaming real-time updates directly to customers over Server-Sent Events (SSE).
+
+---
+
+## 🌟 Key Features
+
+### 🛍️ Soft Future Consumer Experience
+- **Intent-Driven Natural Language Search**: Interprets natural phrasing, budget limits, user goals, and hardware preferences with transparent match percentages and criteria explanations.
+- **Intelligent Matrix Comparison**: Side-by-side spec, battery, performance, and price comparisons with automated factual highlights.
+- **Curated Goal-Based Collections**: Dynamic collections targeted at creators, students, engineers, and digital nomads.
+- **Interactive Cart & Real-Time Checkout**: Instant item updates, delivery tier options, promotional calculations, and address verification.
+- **Real-Time Visual Order Tracking**: Live visual stepper with step-by-step telemetry powered by Server-Sent Events (SSE).
+
+### 🤖 Multi-Agent Commerce Engine
+| Agent | Responsibility | Core Mechanism |
+| :--- | :--- | :--- |
+| **OrderAgent** | Authoritative calculations & validation | State validation, tax/shipping computation, and transitions |
+| **InventoryAgent** | Warehouse stock verification & locking | Atomic reservations via PostgreSQL row-level locks |
+| **PaymentAgent** | Fraud risk evaluation & payment processing | Risk-scored settlement simulation with idempotent transactions |
+| **FulfillmentAgent** | Automated warehouse pick, pack & manifest | Package dimension calculation and manifest generation |
+| **DeliveryAgent** | SLA dispatch, route assignment & tracking | Carrier selection (SkyRoute Autonomous, OrbitAir Cargo) & real-time telemetry |
+
+### ⚡ Engineering & Architecture Highlights
+- **Serverless PostgreSQL (Neon)**: Fully asynchronous persistence via `asyncpg` and SQLAlchemy 2.0 with connection pooling, automatic SSL parameter normalization, and zero-downtime branching compatibility.
+- **High-Throughput Concurrency Worker**: Autonomous queue processor utilizing PostgreSQL `FOR UPDATE SKIP LOCKED` for reliable, distributed background execution without Redis or Celery dependencies.
+- **Strict Financial Integrity**: 100% PostgreSQL `NUMERIC` and Python `Decimal` representation—preventing IEEE-754 floating-point rounding errors.
+- **Idempotency Safeguards**: Built-in `Idempotency-Key` request deduplication preventing double orders or duplicate payment settlements.
+- **Deterministic Simulation Suite**: Built-in test harnesses verifying pipeline behaviors across 8 distinct business scenarios (including stockouts, fraud rejections, carrier delays, and transient retries).
+
+---
+
+## 🏗️ Architecture
+
+```mermaid
+flowchart TD
+    subgraph Client["Frontend Client (React 18 + Vite + TypeScript)"]
+        UI["Soft Future UI & Catalog"]
+        NL["Natural Language Search"]
+        Cart["Cart & Checkout"]
+        SSE_Recv["Real-time SSE Listener"]
+    end
+
+    subgraph API["FastAPI Asynchronous Gateway"]
+        AuthRouter["Auth & Session API"]
+        CatalogRouter["Products & Search API"]
+        OrderRouter["Orders & Checkout API (Idempotency)"]
+        AdminRouter["Operations & Metrics API"]
+        SSE_Stream["Telemetry SSE Streamer"]
+    end
+
+    subgraph Storage["Neon Serverless PostgreSQL"]
+        DB_Catalog[("Catalog & Users")]
+        DB_Orders[("Orders & Ledger")]
+        DB_Queue[("Outbox / Job Queue (SKIP LOCKED)")]
+        DB_Events[("Agent Telemetry Log")]
+    end
+
+    subgraph Workers["Background Multi-Agent Processor"]
+        Worker["Job Poller (FOR UPDATE SKIP LOCKED)"]
+        OrderAg["OrderAgent"]
+        InvAg["InventoryAgent"]
+        PayAg["PaymentAgent"]
+        FulAg["FulfillmentAgent"]
+        DelAg["DeliveryAgent"]
+    end
+
+    Client -->|HTTP / JSON| API
+    SSE_Stream -.->|Server-Sent Events| SSE_Recv
+    API --> Storage
+    Worker -->|Poll & Transition| DB_Queue
+    Worker --> OrderAg & InvAg & PayAg & FulAg & DelAg
+    OrderAg & InvAg & PayAg & FulAg & DelAg --> Storage
+```
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+- **Node.js** >= 18.x (v20+ recommended)
+- **Python** >= 3.13 (or 3.11+)
+- **PostgreSQL** instance (Local PostgreSQL 16+ or [Neon Serverless Postgres](https://neon.tech))
+
+---
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/OWNER/STORE_STING.git
+cd STORE_STING
+```
+
+---
 
 ### 2. Backend Setup
+
 ```bash
 cd backend
+
+# Create virtual environment
 python -m venv .venv
-# On Windows:
+
+# Activate virtual environment
+# Windows:
 .venv\Scripts\activate
-# On Linux/macOS:
+# Linux / macOS:
 # source .venv/bin/activate
 
+# Install dependencies
+pip install --upgrade pip
 pip install -r requirements.txt
-# Run migrations / seed database
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your DATABASE_URL (local Postgres or Neon connection string)
+
+# Initialize schema and seed development catalog
 python -m app.database.seed
-# Start API
+
+# Start FastAPI server
 uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-### 5. Running the Complete Verification Suite
-In the root directory:
+---
+
+### 3. Background Worker Setup
+
+In a separate terminal (with backend `.venv` activated):
 ```bash
-# Run End-to-End Search -> Cart -> Checkout -> Multi-Agent Delivery flow:
-backend\.venv\Scripts\python.exe scripts\verify_flow.py
-
-# Run Backend Pytest Suite (API, State Machine, Concurrency):
-backend\.venv\Scripts\pytest.exe backend\tests -v
-
-# Run Frontend Vitest Suite:
-cd frontend && npm run test
-
-# Run Production Frontend Build:
-cd frontend && npm run build
+cd backend
+python -m app.worker
 ```
 
 ---
 
-## 🛠️ Operations & Simulation Dashboard
+### 4. Frontend Setup
 
-Visit `http://localhost:5173/admin` (or log in with `admin@storesting.com` / `StoreSting2050!`) to access the operations console:
-- **Real-Time Fleet Telemetry**: Live order volume, aggregate revenue, active background jobs, and worker health.
-- **Agent Event Stream**: Granular, auditable multi-agent logs (`OrderAgent`, `InventoryAgent`, `PaymentAgent`, `FulfillmentAgent`, `DeliveryAgent`).
-- **Deterministic Simulation Lab**: Trigger synthetic stress test scenarios with repeatable seeds:
-  - `SUCCESS`: Clean full pipeline completion.
-  - `LOW_STOCK`: Inventory reservation failure and customer alert.
-  - `PAYMENT_RETRY`: Transient network timeout with exponential backoff resolution.
-  - `PAYMENT_FAILURE`: Hard declined transaction handling.
-  - `FRAUD_REJECTION`: Automated fraud risk mitigation.
-  - `DELIVERY_RETRY` & `DELIVERY_FAILURE`: Carrier rerouting and exception logging.
+In a third terminal:
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Configure environment
+cp .env.example .env.local
+
+# Launch Vite development server
+npm run dev
+```
+
+Open your browser to: **`http://localhost:5173`**
 
 ---
 
-## ☁️ Deployment Architecture (Zero Docker)
+## 🧪 Development Sandbox Accounts
 
-- **Frontend**: Static deploy to Netlify (`dist/` directory generated by `npm run build`).
-- **Backend API**: Render Web Service running `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
-- **Background Worker**: Render Background Worker running `python -m app.worker`.
-- **Database**: Neon Serverless PostgreSQL with SSL.
+The initial database seed provisions sample accounts for local development and demonstration:
+
+| Account | Email | Password | Role |
+| :--- | :--- | :--- | :--- |
+| **Operations Lead** | `admin@storesting.com` | `StoreSting2050!` | Administrator / Operations Console |
+| **Customer (Alex Mercer)** | `alex@storesting.com` | `Customer2050!` | Customer Account / Saved Studio Address |
+
+> [!WARNING]
+> These credentials are strictly development fixtures. Never deploy default seed credentials to public production instances.
+
+---
+
+## 🔬 Testing & Verification
+
+STORE STING includes automated test suites covering API contracts, financial math, state machine invariants, and multi-agent pipeline concurrency.
+
+```bash
+# 1. Run Complete End-to-End Flow (Search -> Cart -> Checkout -> Agents -> Delivery):
+python scripts/verify_flow.py
+
+# 2. Run Backend Unit & Integration Tests:
+cd backend
+pytest -v
+
+# 3. Run Ruff Code Quality Linting:
+ruff check app tests
+
+# 4. Run Frontend Vitest Unit Tests:
+cd frontend
+npm run test
+
+# 5. Verify Production Frontend Build:
+npm run build
+```
+
+---
+
+## ⚙️ Environment Variables
+
+### Backend (`backend/.env`)
+| Variable | Description | Default / Example |
+| :--- | :--- | :--- |
+| `PROJECT_NAME` | Name of application | `STORE STING` |
+| `ENVIRONMENT` | Runtime environment (`development` / `production`) | `development` |
+| `DATABASE_URL` | Asynchronous PostgreSQL connection string | `postgresql+asyncpg://user:pass@ep-host.neon.tech/neondb?ssl=require` |
+| `DATABASE_URL_UNPOOLED` | Direct unpooled connection (for migrations) | Optional |
+| `SECRET_KEY` | HMAC key for signing JWT tokens | *Generate a secure secret in production* |
+| `BACKEND_CORS_ORIGINS` | Comma-separated list or JSON array of allowed origins | `http://localhost:5173,https://store-sting.netlify.app` |
+| `WORKER_POLL_INTERVAL_SEC` | Worker queue polling frequency in seconds | `1.0` |
+| `SIMULATION_MODE` | Enable simulated delay and scenarios | `True` |
+
+### Frontend (`frontend/.env.local`)
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `VITE_API_BASE_URL` | Base URL for the backend API | `http://localhost:8000/api` |
+
+---
+
+## 📁 Repository Structure
+
+```text
+STORE_STING/
+├── .github/
+│   ├── workflows/ci.yml       # GitHub Actions CI pipeline
+│   ├── CODEOWNERS             # Component ownership paths
+│   └── dependabot.yml         # Automated dependency vulnerability updates
+├── backend/
+│   ├── app/
+│   │   ├── agents/            # Autonomous commerce agents (Order, Inventory, Payment, etc.)
+│   │   ├── api/               # FastAPI route controllers
+│   │   ├── core/              # Configuration, security, and hashing
+│   │   ├── database/          # Models, session factory, seed script
+│   │   ├── orchestration/     # State machine and pipeline coordinator
+│   │   ├── schemas/           # Pydantic data transfer objects
+│   │   ├── worker/            # Concurrency queue processor (SKIP LOCKED)
+│   │   └── main.py            # Application entrypoint & ASGI app
+│   ├── tests/                 # Pytest test suite
+│   ├── requirements.txt       # Python dependencies
+│   └── pyproject.toml         # Python project configuration
+├── frontend/
+│   ├── src/
+│   │   ├── components/        # Soft Future UI components & search bar
+│   │   ├── context/           # React Context (Auth, Cart, Compare)
+│   │   ├── features/          # Discover, Detail, Checkout, Tracking, Operations
+│   │   ├── services/          # API client and SSE stream hooks
+│   │   └── types/             # TypeScript interfaces and domain types
+│   ├── package.json           # Frontend dependencies
+│   └── vite.config.ts         # Vite configuration
+├── docs/                      # Architectural decision records & specifications
+├── scripts/                   # Verification flow and startup scripts
+├── LICENSE                    # MIT License
+├── SECURITY.md                # Vulnerability disclosure policy
+├── CONTRIBUTING.md            # Guidelines for contributors
+└── README.md                  # Project overview and documentation
+```
+
+---
+
+## 🛡️ Security & Responsible Disclosure
+
+Please review our [SECURITY.md](SECURITY.md) for vulnerability reporting guidelines. Never commit real credentials, database passwords, or private encryption keys to source control.
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE) © 2026 STORE STING Contributors.  
+See [COPYRIGHT.md](COPYRIGHT.md) and [THIRD_PARTY_LICENSES.md](docs/THIRD_PARTY_LICENSES.md) for trademark notices and third-party software attributions.

@@ -1,6 +1,6 @@
 import asyncio
 import json
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 from app.orchestration.orchestrator import register_subscriber, unregister_subscriber
 
@@ -24,7 +24,7 @@ async def stream_order_events(order_id: str, request: Request):
                     yield f"data: {json.dumps(data)}\n\n"
                 except asyncio.TimeoutError:
                     # Keep-alive heartbeat
-                    yield f": heartbeat\n\n"
+                    yield ": heartbeat\n\n"
         finally:
             unregister_subscriber(order_id, queue)
 

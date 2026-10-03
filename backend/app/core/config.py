@@ -28,8 +28,12 @@ class Settings(BaseSettings):
             v = v.replace("&channel_binding=require", "").replace("channel_binding=require&", "").replace("channel_binding=require", "")
         return v
 
+    # Neon Branching & Unpooled connection (for migrations/direct access)
+    DATABASE_URL_UNPOOLED: Optional[str] = None
+    NEON_BRANCH: Optional[str] = None
+
     # Security
-    SECRET_KEY: str = "store-sting-ultra-secret-2050-future-commerce-key-999"
+    SECRET_KEY: str = "store-sting-dev-secret-key-change-in-production-2050"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
@@ -46,6 +50,15 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",
         "https://store-sting.netlify.app",
     ]
+
+    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @classmethod
+    def assemble_cors_origins(cls, v: str | list[str]) -> list[str]:
+        if isinstance(v, str) and not v.startswith("["):
+            return [i.strip() for i in v.split(",") if i.strip()]
+        elif isinstance(v, (list, str)):
+            return v  # type: ignore
+        raise ValueError(v)
 
     model_config = SettingsConfigDict(
         env_file=".env",

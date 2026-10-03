@@ -77,7 +77,7 @@ async def get_my_space(
     featured_res = await db.execute(
         select(Product)
         .options(selectinload(Product.images))
-        .where(Product.is_featured == True)
+        .where(Product.is_featured.is_(True))
         .limit(4)
     )
     curated_picks = [ProductResponse.model_validate(p) for p in featured_res.scalars().all()]

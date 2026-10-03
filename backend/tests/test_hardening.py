@@ -4,7 +4,7 @@ from decimal import Decimal
 from httpx import AsyncClient
 from sqlalchemy import select
 from app.orchestration.state_machine import can_transition, validate_transition, InvalidStateTransitionError, OrderState
-from app.database.models import Product, Order, Inventory, RunEvent, IdempotencyKey, User
+from app.database.models import Product, Order, Inventory, User
 from app.database.session import async_session_factory
 from app.core.security import create_access_token
 
@@ -118,7 +118,6 @@ async def test_admin_authorization_enforced(client: AsyncClient):
 async def test_inventory_concurrency_row_locking():
     """Verify that row locking prevents overselling when multiple workers attempt reserving stock."""
     import asyncio
-    from app.database.models import Inventory
 
     async with async_session_factory() as session:
         # Create a test product with foreign key satisfied

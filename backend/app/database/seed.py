@@ -1,13 +1,12 @@
 import asyncio
 import uuid
 from decimal import Decimal
-from datetime import datetime, timezone
 from sqlalchemy import select
 from app.database.session import engine, async_session_factory
 from app.database.base import Base
 from app.database.models import (
     User, Address, Category, Product, ProductImage,
-    ProductVariant, Inventory, Review
+    Inventory, Review
 )
 from app.core.security import get_password_hash
 
@@ -375,7 +374,12 @@ async def seed_database():
             print("Database already contains data. Skipping initial seed.")
             return
 
-        print("Seeding Users...")
+        # -------------------------------------------------------------------------
+        # LOCAL DEVELOPMENT / DEMO CREDENTIALS ONLY
+        # DO NOT USE IN PRODUCTION ENVIRONMENTS.
+        # Set real administrative accounts via environment or secure provisioning.
+        # -------------------------------------------------------------------------
+        print("Seeding Users (Development Sandbox)...")
         admin = User(
             id=str(uuid.uuid4()),
             email="admin@storesting.com",

@@ -1,11 +1,10 @@
-from typing import List, Dict, Any
 from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc
 from sqlalchemy.orm import selectinload
 from app.database.session import get_db
-from app.database.models import Order, OrderItem, Run, RunEvent, Job, Inventory, Product, User
+from app.database.models import Order, Run, RunEvent, Job, Inventory, User
 from app.api.deps import get_current_admin
 
 router = APIRouter(prefix="/admin", tags=["admin"])

@@ -1,0 +1,11 @@
+# Global owners for the entire repository
+* @STORE-STING-maintainers
+
+# Backend and database orchestration
+/backend/ @STORE-STING-maintainers
+
+# Frontend client application
+/frontend/ @STORE-STING-maintainers
+
+# CI workflows and security
+/.github/ @STORE-STING-maintainers

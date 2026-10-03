@@ -1,9 +1,9 @@
 import re
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any
 from decimal import Decimal
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, or_
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from app.database.session import get_db
 from app.database.models import Product

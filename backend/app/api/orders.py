@@ -6,14 +6,13 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from sqlalchemy.orm import selectinload
-from app.database.session import get_db, async_session_factory
-from app.database.models import Order, OrderItem, Product, Job, User, Run, RunEvent, IdempotencyKey
+from app.database.session import get_db
+from app.database.models import Order, OrderItem, Product, Job, User, Run, IdempotencyKey
 from app.schemas.schemas import (
     OrderCreateRequest, OrderResponse,
-    CheckoutEstimateRequest, CheckoutEstimateResponse, OrderItemResponse
+    CheckoutEstimateRequest, CheckoutEstimateResponse
 )
 from app.api.deps import get_current_user_optional, get_current_user
-from app.orchestration.orchestrator import OrderOrchestrator
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 

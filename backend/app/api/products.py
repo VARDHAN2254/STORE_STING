@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, asc, cast, String
 from sqlalchemy.orm import selectinload
 from app.database.session import get_db
-from app.database.models import Product, Category, ProductImage
+from app.database.models import Product, Category
 from app.schemas.schemas import ProductResponse, ProductDetailResponse
 
 router = APIRouter(prefix="/products", tags=["products"])

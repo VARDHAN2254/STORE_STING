@@ -1,6 +1,5 @@
 import asyncio
 import os
-import signal
 import structlog
 from datetime import datetime, timezone
 from sqlalchemy import select, update

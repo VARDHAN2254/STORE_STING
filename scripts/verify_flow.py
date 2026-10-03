@@ -7,7 +7,11 @@ import uuid
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
-base_url = 'http://127.0.0.1:8000/api'
+import os
+
+base_url = os.getenv('API_BASE_URL', 'http://127.0.0.1:8000/api')
+admin_email = os.getenv('ADMIN_EMAIL', 'admin@storesting.com')
+admin_password = os.getenv('ADMIN_PASSWORD', 'StoreSting2050!')
 
 EXPECTED_SEQUENCE = [
     'CREATED',
@@ -125,7 +129,7 @@ def main():
     # 8. Admin Metrics with Authentication
     login_req = urllib.request.Request(
         f'{base_url}/auth/login',
-        data=json.dumps({'email': 'admin@storesting.com', 'password': 'StoreSting2050!'}).encode('utf-8'),
+        data=json.dumps({'email': admin_email, 'password': admin_password}).encode('utf-8'),
         headers={'Content-Type': 'application/json'}
     )
     admin_auth = json.loads(urllib.request.urlopen(login_req).read())
