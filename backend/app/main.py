@@ -1,5 +1,8 @@
+import time
+from collections import defaultdict
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import structlog
 
@@ -42,6 +45,49 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# In-memory sliding-window rate limiter for sensitive endpoints
+_rate_limit_records = defaultdict(list)
+RATE_LIMIT_RULES = {
+    ("/api/auth/login", "POST"): (20, 60),      # 20 attempts per minute per IP
+    ("/api/auth/register", "POST"): (10, 60),   # 10 registrations per minute per IP
+}
+
+
+@app.middleware("http")
+async def security_and_rate_limit_middleware(request: Request, call_next):
+    # 1. Rate limiting check for authentication/sensitive routes
+    normalized_path = request.url.path.rstrip("/")
+    rule_key = (normalized_path, request.method.upper())
+    if rule_key in RATE_LIMIT_RULES:
+        max_reqs, window_sec = RATE_LIMIT_RULES[rule_key]
+        client_ip = request.client.host if request.client else "unknown"
+        now = time.time()
+        tracker_key = f"{rule_key[0]}:{client_ip}"
+
+        recent = [t for t in _rate_limit_records[tracker_key] if now - t < window_sec]
+        if len(recent) >= max_reqs:
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Too many requests. Please wait before retrying."},
+                headers={"Retry-After": str(int(window_sec))},
+            )
+        recent.append(now)
+        _rate_limit_records[tracker_key] = recent
+
+    # 2. Call next handler
+    response = await call_next(request)
+
+    # 3. Inject standard security headers
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    if settings.ENVIRONMENT == "production":
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+
+    return response
 
 # Mount API Routers
 app.include_router(health.router, prefix="/api")

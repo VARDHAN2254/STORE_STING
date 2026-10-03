@@ -168,6 +168,7 @@ async def list_orders(
 @router.get("/{id_or_number}")
 async def get_order_detail(
     id_or_number: str,
+    current_user: Optional[User] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db)
 ):
     query = (
@@ -184,6 +185,10 @@ async def get_order_detail(
     order = result.scalars().first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found.")
+
+    # IDOR Protection: Registered customer orders cannot be viewed by other authenticated customers
+    if order.user_id and current_user and current_user.id != order.user_id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized to access this order.")
 
     latest_run = order.runs[-1] if order.runs else None
     events_list = []

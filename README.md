@@ -8,7 +8,7 @@
 *Powered by an autonomous multi-agent commerce engine, light Soft Future design, and Neon Serverless PostgreSQL.*
 
 [![CI Pipeline](https://github.com/VARDHAN2254/STORE_STING/actions/workflows/ci.yml/badge.svg)](https://github.com/VARDHAN2254/STORE_STING/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: Proprietary](https://img.shields.io/badge/License-All_Rights_Reserved-red.svg)](LICENSE)
 [![Python 3.13+](https://img.shields.io/badge/Python-3.13+-3776AB.svg?logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![React 18](https://img.shields.io/badge/React-18.3+-61DAFB.svg?logo=react&logoColor=black)](https://react.dev)
@@ -286,5 +286,5 @@ Please review our [SECURITY.md](SECURITY.md) for vulnerability reporting guideli
 
 ## 📄 License
 
-This project is licensed under the [MIT License](LICENSE) © 2026 STORE STING Contributors.  
-See [COPYRIGHT.md](COPYRIGHT.md) and [THIRD_PARTY_LICENSES.md](docs/THIRD_PARTY_LICENSES.md) for trademark notices and third-party software attributions.
+Copyright © 2026 STORE STING Contributors. All Rights Reserved.  
+See [LICENSE](LICENSE), [COPYRIGHT.md](COPYRIGHT.md), and [THIRD-PARTY-NOTICES.md](docs/THIRD-PARTY-NOTICES.md) for licensing and third-party software attributions.

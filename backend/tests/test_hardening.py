@@ -257,3 +257,106 @@ async def test_deterministic_scenarios(client: AsyncClient):
         assert run_retry.status == "COMPLETED"
         assert order_retry.status == "DELIVERED"
 
+
+@pytest.mark.asyncio
+async def test_security_headers_injected(client: AsyncClient):
+    """Verify production security headers (X-Content-Type-Options, Frame-Options, etc.) on API responses."""
+    resp = await client.get("/api/health")
+    assert resp.status_code == 200
+    assert resp.headers.get("x-content-type-options") == "nosniff"
+    assert resp.headers.get("x-frame-options") == "DENY"
+    assert resp.headers.get("referrer-policy") == "strict-origin-when-cross-origin"
+
+
+@pytest.mark.asyncio
+async def test_idor_order_access_restriction(client: AsyncClient):
+    """Verify that Customer B cannot inspect an order owned by Customer A."""
+    from app.core.security import create_access_token
+    from app.database.models import User
+
+    async with async_session_factory() as session:
+        # Create user B
+        user_b = User(
+            id=str(uuid.uuid4()),
+            email=f"userb-{uuid.uuid4().hex[:4]}@example.com",
+            hashed_password="hashed_placeholder",
+            full_name="User B",
+            role="customer",
+        )
+        # Create order owned by usr-alex-2050 (Customer A)
+        order_a = Order(
+            id=str(uuid.uuid4()),
+            order_number=f"SS-IDOR-{uuid.uuid4().hex[:6]}",
+            user_id="usr-alex-2050",
+            customer_name="Customer A",
+            customer_email="alex@storesting.com",
+            shipping_address={"city": "Bengaluru"},
+            subtotal=Decimal("100.00"),
+            total=Decimal("100.00"),
+            status="CREATED",
+            payment_method="UPI",
+        )
+        session.add_all([user_b, order_a])
+        await session.commit()
+
+    token_b = create_access_token(user_b.id)
+    token_a = create_access_token("usr-alex-2050")
+
+    # Customer B requests Customer A's order -> must be 403 Forbidden
+    resp_b = await client.get(
+        f"/api/orders/{order_a.id}",
+        headers={"Authorization": f"Bearer {token_b}"}
+    )
+    assert resp_b.status_code == 403
+
+    # Customer A requests own order -> must be 200 OK
+    resp_a = await client.get(
+        f"/api/orders/{order_a.id}",
+        headers={"Authorization": f"Bearer {token_a}"}
+    )
+    assert resp_a.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_sse_telemetry_stream_authorization(client: AsyncClient):
+    """Verify that unauthenticated callers and unauthorized users cannot stream order events."""
+    from app.core.security import create_access_token
+    from app.database.models import User
+
+    async with async_session_factory() as session:
+        user_intruder = User(
+            id=str(uuid.uuid4()),
+            email=f"intruder-{uuid.uuid4().hex[:4]}@example.com",
+            hashed_password="hashed_placeholder",
+            full_name="Intruder",
+            role="customer",
+        )
+        order_private = Order(
+            id=str(uuid.uuid4()),
+            order_number=f"SS-PRIV-{uuid.uuid4().hex[:6]}",
+            user_id="usr-alex-2050",
+            customer_name="Alex Mercer",
+            customer_email="alex@storesting.com",
+            shipping_address={"city": "Bengaluru"},
+            subtotal=Decimal("500.00"),
+            total=Decimal("500.00"),
+            status="CREATED",
+            payment_method="UPI",
+        )
+        session.add_all([user_intruder, order_private])
+        await session.commit()
+
+    intruder_token = create_access_token(user_intruder.id)
+
+    # 1. Unauthenticated request to private order stream -> 403 Forbidden
+    unauth_resp = await client.get(f"/api/orders/{order_private.id}/stream")
+    assert unauth_resp.status_code == 403
+
+    # 2. Authenticated different user to private order stream -> 403 Forbidden
+    intruder_resp = await client.get(
+        f"/api/orders/{order_private.id}/stream",
+        headers={"Authorization": f"Bearer {intruder_token}"}
+    )
+    assert intruder_resp.status_code == 403
+
+

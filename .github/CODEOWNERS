@@ -1,11 +1,11 @@
-# Global owners for the entire repository
-* @STORE-STING-maintainers
+# Global owner for the entire repository
+* @VARDHAN2254
 
-# Backend and database orchestration
-/backend/ @STORE-STING-maintainers
+# Backend, database and commerce agents
+/backend/ @VARDHAN2254
 
 # Frontend client application
-/frontend/ @STORE-STING-maintainers
+/frontend/ @VARDHAN2254
 
 # CI workflows and security
-/.github/ @STORE-STING-maintainers
+/.github/ @VARDHAN2254
